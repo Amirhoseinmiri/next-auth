@@ -1,30 +1,36 @@
-import User from "@/module/User";
 import connectDB from "@/config/db";
+import User from "@/module/User";
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
 
-export const POST = async (req) => {
-  const { username, email, password, confirmPassword } = await req.json();
+export const POST = async (request) => {
+  const { username, email, password, confirmPassword } = await request.json();
+
   if (password !== confirmPassword) {
     return new NextResponse(
-      JSON.stringify({ error: "Passwords dosent match" }, { status: 400 })
+      JSON.stringify({ error: "Passwords do not match" }),
+      {
+        status: 400,
+      }
     );
   }
+
   await connectDB();
+
   const existingUser = await User.findOne({ email });
 
   if (existingUser) {
-    return new NextResponse(
-      JSON.stringify({ error: "User already exists" }, { status: 400 })
-    );
+    return new NextResponse(JSON.stringify({ error: "User already exists" }), {
+      status: 400,
+    });
   }
 
-  const hashedPass = await bcrypt.hash(password, 10);
-  const newUser = new User({ username, email, password: hashedPass });
+  const hashedPassword = await bcrypt.hash(password, 10);
+  const newUser = new User({ username, email, password: hashedPassword });
 
   try {
     await newUser.save();
-    return new NextResponse("User succesFully register", { status: 201 });
+    return new NextResponse("User is registered", { status: 201 });
   } catch (error) {
     return new NextResponse(error, { status: 500 });
   }
